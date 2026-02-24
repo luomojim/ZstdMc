@@ -4,16 +4,12 @@ import cn.tohsaka.factory.zstdmc.metric.ZstdMetric;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.loading.FMLLoader;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,42 +19,48 @@ import java.util.stream.Collectors;
 
 import static cn.tohsaka.factory.zstdmc.metric.DebugScreenAppender.formatBytes;
 
-@SuppressWarnings("ALL")
-@EventBusSubscriber(modid = Zstdmc.MODID, bus = EventBusSubscriber.Bus.GAME)
-public class ModCommands {
+@Mod.EventBusSubscriber(modid = Zstdmc.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public final class ModCommands {
+    private ModCommands() {
+    }
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 
-        // 注册 /zstdmc 基础命令
         dispatcher.register(Commands.literal("zstd")
-            .requires(source -> source.hasPermission(2))
-            .then(Commands.literal("status")
-                .executes(ModCommands::runStatus))
-            .then(Commands.literal("reset")
-                .executes(ModCommands::runReset))
-            .then(Commands.literal("top10")
-                .executes(ModCommands::listTop10))
-
-        );
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("status").executes(ModCommands::runStatus))
+                .then(Commands.literal("reset").executes(ModCommands::runReset))
+                .then(Commands.literal("top10").executes(ModCommands::listTop10)));
     }
 
     private static int listTop10(CommandContext<CommandSourceStack> ctx) {
         var playerList = ctx.getSource().getServer().getPlayerList();
         var map = ZstdMetric.getMap();
-        var list = map.keySet().stream().sorted(Comparator.comparingLong((UUID uuid) -> map.get(uuid).getTxbytes2()).reversed()).limit(10).collect(Collectors.toUnmodifiableList());
-        int i=0;
+        var list = map.keySet().stream()
+                .sorted(Comparator.comparingLong((UUID uuid) -> {
+                    var entry = map.get(uuid);
+                    return entry != null ? entry.getTxbytes2() : 0L;
+                }).reversed())
+                .limit(10)
+                .collect(Collectors.toUnmodifiableList());
+
+        int i = 0;
         List<String> msg = new ArrayList<>();
         for (UUID uuid : list) {
             i++;
             var entry = map.get(uuid);
+            if (entry == null) {
+                continue;
+            }
             String rxFormatted = formatBytes(entry.getRxbytes2()) + "/" + formatBytes(entry.getRxbytes());
             String txFormatted = formatBytes(entry.getTxbytes()) + "/" + formatBytes(entry.getTxbytes2());
             var player = playerList.getPlayer(uuid);
-            msg.add(String.format("[%d][%s]发送字节数:%s | 接收字节数:%s",i,player.getName().getString(),txFormatted,rxFormatted));
+            String playerName = player != null ? player.getName().getString() : uuid.toString();
+            msg.add(String.format("[%d][%s] TX:%s | RX:%s", i, playerName, txFormatted, rxFormatted));
         }
-        ctx.getSource().sendSuccess(() -> Component.literal(String.join("\n",msg)), true);
+        ctx.getSource().sendSuccess(() -> Component.literal(String.join("\n", msg)), true);
         return 1;
     }
 
@@ -71,7 +73,7 @@ public class ModCommands {
 
     private static int runReset(CommandContext<CommandSourceStack> context) {
         ZstdMetric.reset();
-        context.getSource().sendSuccess(() -> Component.literal("统计数据已重置"), true);
+        context.getSource().sendSuccess(() -> Component.literal("Zstd metrics reset."), true);
         return 1;
     }
 }

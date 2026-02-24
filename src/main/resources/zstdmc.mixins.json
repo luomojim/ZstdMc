@@ -1,17 +1,15 @@
 {
   "required": true,
-  "minVersion": "0.8",
+  "minVersion": "0.8.5",
   "package": "cn.tohsaka.factory.zstdmc.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "zstdmc.refmap.json",
   "mixins": [
     "MixinConnection"
   ],
   "client": [
   ],
   "injectors": {
-    "defaultRequire": 1
-  },
-  "overwrites": {
-    "requireAnnotations": true
+    "defaultRequire": 0
   }
 }

@@ -1,39 +1,41 @@
-ZstdMC是一个旨在优化多人模式网络占用的mod
+# ZstdMC (Forge 1.20.1)
 
+ZstdMC is a Forge mod that replaces Minecraft's vanilla packet compression/decompression handlers with Zstandard (Zstd) to reduce multiplayer bandwidth usage.
 
+## Current Target
 
-本mod使用zstandard标准库替换mc内置的压缩解压缩模块，从而提高压缩比节省流量
+- Loader: Forge
+- Minecraft: 1.20.1
+- Forge: 47.x
+- Java: 17
 
-绝大多数情况下，不会对游戏产生负面影响
+## What This Mod Changes
 
-多人游戏可以节省约40~90%的网络带宽，且不会占用太多CPU资源
+- Replaces `Connection.setupCompression` pipeline handlers:
+  - Vanilla `compress` -> `ZstdCompressionEncoder`
+  - Vanilla `decompress` -> `ZstdCompressionDecoder`
+- Works for:
+  - Dedicated server
+  - Integrated server (Open to LAN)
 
-您只需下载mod文件，放入服务端和客户端文件夹，然后更改服务端配置 network-compression-threshold 大于 128 即可（推荐256）
+## Installation
 
-注:多数情况您应选择fat版mod文件，如果遇到崩溃情况，请更换为fit版本即可解决
+1. Put the mod on both server and client.
+2. Set `network-compression-threshold` in `server.properties` to `128` or higher (recommended `256`).
+3. For LAN play, both the host and all joining clients must load this mod.
 
-===================================================================
+## Verification In Game
 
+- Press F3 and check right-side debug text for `[Zstd Metrics]`.
+- Run admin commands:
+  - `/zstd status`
+  - `/zstd reset`
+  - `/zstd top10`
 
-ZstdMC: Multiplayer Network Optimization
+## Build
 
-ZstdMC is a performance-focused mod designed to optimize network bandwidth usage in multiplayer environments.
+- `gradlew.bat buildAll`
+  - `fit` jar: regular jar (no dependency shading)
+  - `fat` jar: includes local `libs/zstd-jni-1.5.7-6.jar`
 
-By replacing Minecraft's built-in compression and decompression modules with the Zstandard (zstd) library, this mod achieves significantly higher compression ratios, resulting in substantial data savings. In most scenarios, it provides these benefits with no negative impact on the game's stability or performance.
-
-Key Features
-Bandwidth Efficiency: Saves approximately 40% to 90% of network traffic in multiplayer mode.
-
-Low Overhead: High-performance compression that minimizes CPU resource consumption.
-
-Easy Setup: Simply drop the mod file into both the server and client mods folders.
-
-Configuration Requirement
-To enable the optimization, ensure your server's server.properties file has the following parameter set:
-
-network-compression-threshold=128 (or higher)
-
-Important Note on Versions
-Fat Version (Recommended): In most cases, you should use the Fat version, which includes all necessary libraries.
-
-Fit Version: If you experience crashes or compatibility issues, please switch to the Fit version to resolve them.
+In most environments, prefer the `fat` jar.

@@ -1,39 +1,33 @@
 package cn.tohsaka.factory.zstdmc;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.config.ModConfigEvent;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+@Mod.EventBusSubscriber(modid = Zstdmc.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+public final class Config {
+    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
-// An example config class. This is not required, but it's a good idea to have one to keep your config organized.
-// Demonstrates how to use Neo's config APIs
-@SuppressWarnings("ALL")
-@EventBusSubscriber(modid = Zstdmc.MODID, bus = EventBusSubscriber.Bus.MOD)
-public class Config {
-    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-    private static final ModConfigSpec.IntValue COMPRESSION_LEVEL = BUILDER.defineInRange("compression_level", 7, 1, 15);
+    private static final ForgeConfigSpec.IntValue COMPRESSION_LEVEL = BUILDER
+            .comment("Zstd compression level. Higher is better ratio with more CPU usage.")
+            .defineInRange("compression_level", 7, 1, 15);
 
-    static final ModConfigSpec SPEC = BUILDER.build();
-    private static int level;
+    static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    private static boolean validateItemName(final Object obj) {
-        return obj instanceof String itemName && BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(itemName));
+    private static volatile int level = COMPRESSION_LEVEL.get();
+
+    private Config() {
     }
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
-        level = COMPRESSION_LEVEL.get();
-
+        if (event.getConfig().getSpec() == SPEC) {
+            level = COMPRESSION_LEVEL.get();
+        }
     }
 
-    public static int getLevel(){
-        return level;
+    public static int getLevel() {
+        return Math.max(1, Math.min(15, level));
     }
 }

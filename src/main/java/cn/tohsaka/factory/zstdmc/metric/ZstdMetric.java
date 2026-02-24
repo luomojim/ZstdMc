@@ -1,70 +1,70 @@
 package cn.tohsaka.factory.zstdmc.metric;
 
-import cn.tohsaka.factory.zstdmc.Zstdmc;
 import io.netty.channel.ChannelHandlerContext;
-import net.minecraft.client.gui.components.DebugScreenOverlay;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.world.entity.player.Player;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
-public class ZstdMetric {
-    private static ConcurrentHashMap<UUID,MetricData> map = new ConcurrentHashMap<>();
-    private static LongAdder rxbytes = new LongAdder();
-    private static LongAdder txbytes = new LongAdder();
-    private static LongAdder rxbytes2 = new LongAdder();
-    private static LongAdder txbytes2 = new LongAdder();
+public final class ZstdMetric {
+    private static final ConcurrentHashMap<UUID, MetricData> MAP = new ConcurrentHashMap<>();
+    private static final LongAdder RX_BYTES = new LongAdder();
+    private static final LongAdder TX_BYTES = new LongAdder();
+    private static final LongAdder RX_BYTES_COMPRESSED = new LongAdder();
+    private static final LongAdder TX_BYTES_COMPRESSED = new LongAdder();
 
-    public static void reset(){
-        map.clear();
-        rxbytes.reset();
-        rxbytes2.reset();
-        txbytes.reset();
-        txbytes2.reset();
+    private ZstdMetric() {
     }
 
-    public static void update(ChannelHandlerContext ctx, long rx, long rx2, long tx, long tx2){
-        Connection connection = (Connection) ctx.channel().pipeline().get("packet_handler");
-        if (connection != null) {
+    public static void reset() {
+        MAP.clear();
+        RX_BYTES.reset();
+        RX_BYTES_COMPRESSED.reset();
+        TX_BYTES.reset();
+        TX_BYTES_COMPRESSED.reset();
+    }
+
+    public static void update(ChannelHandlerContext ctx, long rx, long rx2, long tx, long tx2) {
+        var packetHandler = ctx.channel().pipeline().get("packet_handler");
+        if (packetHandler instanceof Connection connection) {
             var listener = connection.getPacketListener();
-            if(listener instanceof ServerGamePacketListenerImpl serverGamePacketListener){
+            if (listener instanceof ServerGamePacketListenerImpl serverGamePacketListener) {
                 var player = serverGamePacketListener.getPlayer();
-                var uuid = player.getUUID();
-                if(!map.containsKey(uuid)){
-                    map.put(uuid,new MetricData());
+                if (player != null) {
+                    var uuid = player.getUUID();
+                    MAP.computeIfAbsent(uuid, ignored -> new MetricData())
+                            .update(player, player.getIpAddress(), rx, rx2, tx, tx2);
                 }
-                map.get(uuid).update(player,player.getName().getString(),player.getIpAddress(),rx,rx2,tx,tx2);
             }
-            rxbytes.add(rx);
-            txbytes.add(tx);
-            rxbytes2.add(rx2);
-            txbytes2.add(tx2);
         }
+
+        RX_BYTES.add(rx);
+        TX_BYTES.add(tx);
+        RX_BYTES_COMPRESSED.add(rx2);
+        TX_BYTES_COMPRESSED.add(tx2);
     }
 
     public static Long getRxbytes() {
-        return rxbytes.longValue();
+        return RX_BYTES.longValue();
     }
+
     public static Long getTxbytes() {
-        return txbytes.longValue();
+        return TX_BYTES.longValue();
     }
+
     public static Long getRxbytes2() {
-        return rxbytes2.longValue();
+        return RX_BYTES_COMPRESSED.longValue();
     }
+
     public static Long getTxbytes2() {
-        return txbytes2.longValue();
+        return TX_BYTES_COMPRESSED.longValue();
     }
 
     public static Map<UUID, MetricData> getMap() {
-        return Collections.unmodifiableMap(map);
+        return Collections.unmodifiableMap(MAP);
     }
 }

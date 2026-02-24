@@ -21,8 +21,11 @@ ZstdMC 是一个 Forge 1.20.1 模组，用 Zstandard (Zstd) 替换 Minecraft 原
    - `network-compression-threshold=128`（建议 `256`）。
 
 ### 包类型说明
-- `fit`：不内置 `zstd-jni`，更适合大型整合包（避免与其它模组重复打包冲突）。
-- `fat`：内置 `zstd-jni`，适合依赖环境简单、希望单文件使用的场景。
+- `fat`：默认推荐，内置 `zstd-jni`，多数环境可直接使用。
+- `fit`：不内置 `zstd-jni`，用于兼容场景。
+
+一般情况下请优先使用 `fat`。  
+如果启动出现报错（例如与其他模组重复提供 zstd 相关类导致冲突），再切换到 `fit` 版本。
 
 ### 常见问题
 - 提示“无法加载有效的 resourcepackinfo”：
@@ -49,8 +52,11 @@ ZstdMC is a Forge 1.20.1 mod that replaces Minecraft's vanilla packet compressio
    - `network-compression-threshold=128` (recommended `256`).
 
 ### Artifact Types
-- `fit`: no bundled `zstd-jni`; recommended for modpacks to avoid duplicate-package conflicts.
-- `fat`: bundles `zstd-jni`; convenient for standalone environments.
+- `fat`: recommended by default, bundles `zstd-jni`, and works out-of-the-box in most environments.
+- `fit`: does not bundle `zstd-jni`, intended for compatibility cases.
+
+In general, use `fat` first.  
+If startup fails (for example, duplicate zstd classes provided by another mod), switch to `fit`.
 
 ### Troubleshooting
 - If you see `invalid resourcepackinfo`:

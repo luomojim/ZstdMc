@@ -61,3 +61,9 @@ If startup fails (for example, duplicate zstd classes provided by another mod), 
 ### Troubleshooting
 - If you see `invalid resourcepackinfo`:
   - Older jars were missing `pack.mcmeta`. Use a newly built jar from this repository.
+
+## 项目鸣谢 / Acknowledgements
+
+- 本项目的 Forge 迁移工作基于原作者项目，没有原项目就没有当前版本。  
+  The Forge migration in this project is based on the original work, and this release would not exist without it.
+- Original project: [MeguminKato/ZstdMc](https://github.com/MeguminKato/ZstdMc)

@@ -30,7 +30,9 @@ public class ZstdCompressionDecoder extends ByteToMessageDecoder {
 
         int decompressedLength = new FriendlyByteBuf(in).readVarInt();
         if (decompressedLength == 0) {
-            out.add(in.readRetainedSlice(in.readableBytes()));
+            int readable = in.readableBytes();
+            out.add(in.readRetainedSlice(readable));
+            ZstdMetric.update(ctx, readable, readable, 0, 0);
             return;
         }
 
@@ -66,7 +68,7 @@ public class ZstdCompressionDecoder extends ByteToMessageDecoder {
         }
 
         out.add(Unpooled.wrappedBuffer(decompressed, 0, actualLength));
-        ZstdMetric.update(ctx, readable, actualLength, 0, 0);
+        ZstdMetric.update(ctx, actualLength, readable, 0, 0);
     }
 
     public void setThreshold(int threshold, boolean validateDecompressed) {

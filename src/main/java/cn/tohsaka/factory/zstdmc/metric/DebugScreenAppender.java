@@ -23,8 +23,16 @@ public final class DebugScreenAppender {
         List<String> rightText = event.getRight();
         rightText.add("");
         rightText.add(ChatFormatting.AQUA + Component.translatable("zstdmc.debug.title").getString());
-        String rxFormatted = ChatFormatting.GRAY + "RX: " + ChatFormatting.WHITE + formatBytes(ZstdMetric.getRxbytes()) + "/" + formatBytes(ZstdMetric.getRxbytes2());
-        String txFormatted = ChatFormatting.GRAY + "TX: " + ChatFormatting.WHITE + formatBytes(ZstdMetric.getTxbytes()) + "/" + formatBytes(ZstdMetric.getTxbytes2());
+        long rxOriginal = ZstdMetric.getRxbytes();
+        long rxCompressed = ZstdMetric.getRxbytes2();
+        long txOriginal = ZstdMetric.getTxbytes();
+        long txCompressed = ZstdMetric.getTxbytes2();
+        String rxFormatted = ChatFormatting.GRAY + "RX(orig/comp): " + ChatFormatting.WHITE
+                + formatBytes(rxOriginal) + "/" + formatBytes(rxCompressed)
+                + ChatFormatting.DARK_GRAY + " (" + formatReduction(rxOriginal, rxCompressed) + ")";
+        String txFormatted = ChatFormatting.GRAY + "TX(orig/comp): " + ChatFormatting.WHITE
+                + formatBytes(txOriginal) + "/" + formatBytes(txCompressed)
+                + ChatFormatting.DARK_GRAY + " (" + formatReduction(txOriginal, txCompressed) + ")";
         rightText.add(rxFormatted);
         rightText.add(txFormatted);
     }
@@ -44,5 +52,13 @@ public final class DebugScreenAppender {
         int exp = (int) (Math.log(bytes) / Math.log(1024));
         char pre = "KMGTPE".charAt(exp - 1);
         return String.format("%.2f %sB", bytes / Math.pow(1024, exp), pre);
+    }
+
+    public static String formatReduction(long original, long compressed) {
+        if (original <= 0) {
+            return "n/a";
+        }
+        double ratio = 1.0 - ((double) compressed / (double) original);
+        return String.format("saved %.1f%%", ratio * 100.0);
     }
 }

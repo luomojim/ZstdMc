@@ -23,10 +23,9 @@ public class ZstdCompressionEncoder extends MessageToByteEncoder<ByteBuf> {
         if (readableBytes < this.threshold) {
             new FriendlyByteBuf(out).writeVarInt(0);
             out.writeBytes(msg, msg.readerIndex(), readableBytes);
+            ZstdMetric.update(ctx, 0, 0, readableBytes, readableBytes);
             return;
         }
-
-        new FriendlyByteBuf(out).writeVarInt(readableBytes);
 
         byte[] source = ByteBufUtil.getBytes(msg, msg.readerIndex(), readableBytes, false);
         int maxCompressedSize = Math.toIntExact(Zstd.compressBound(readableBytes));
@@ -47,6 +46,15 @@ public class ZstdCompressionEncoder extends MessageToByteEncoder<ByteBuf> {
         }
 
         int compressedSizeInt = Math.toIntExact(compressedSize);
+        if (compressedSizeInt >= readableBytes) {
+            // Keep bandwidth stable for incompressible payloads.
+            new FriendlyByteBuf(out).writeVarInt(0);
+            out.writeBytes(source);
+            ZstdMetric.update(ctx, 0, 0, readableBytes, readableBytes);
+            return;
+        }
+
+        new FriendlyByteBuf(out).writeVarInt(readableBytes);
         out.writeBytes(compressed, 0, compressedSizeInt);
         ZstdMetric.update(ctx, 0, 0, readableBytes, compressedSizeInt);
     }

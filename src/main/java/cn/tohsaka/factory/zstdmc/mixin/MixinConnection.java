@@ -1,5 +1,6 @@
 package cn.tohsaka.factory.zstdmc.mixin;
 
+import cn.tohsaka.factory.zstdmc.Config;
 import cn.tohsaka.factory.zstdmc.Zstdmc;
 import cn.tohsaka.factory.zstdmc.codec.ZstdCompressionDecoder;
 import cn.tohsaka.factory.zstdmc.codec.ZstdCompressionEncoder;
@@ -13,11 +14,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mixin(Connection.class)
 public abstract class MixinConnection {
     @Unique
     private static Field zstdmc$channelField;
+    @Unique
+    private static final AtomicBoolean zstdmc$loggedInstall = new AtomicBoolean(false);
 
     @Inject(method = "setupCompression(IZ)V", at = @At("HEAD"), cancellable = true, require = 0)
     private void zstdmc$setupCompressionModern(int threshold, boolean validateDecompressed, CallbackInfo ci) {
@@ -30,14 +34,25 @@ public abstract class MixinConnection {
     private boolean zstdmc$applyCompression(int threshold, boolean validateDecompressed) {
         Channel channel = this.zstdmc$getChannel();
         if (channel == null) {
+            Zstdmc.LOGGER.debug("Skip Zstd setupCompression replacement because Connection channel is unavailable.");
             return false;
         }
 
         ChannelPipeline pipeline = channel.pipeline();
         if (threshold >= 0) {
-            this.zstdmc$installDecoder(pipeline, threshold, validateDecompressed);
-            this.zstdmc$installEncoder(pipeline, threshold);
-            Zstdmc.LOGGER.debug("Installed Zstd compression handlers with threshold={} validateDecompressed={}", threshold, validateDecompressed);
+            int effectiveThreshold = Config.getEffectiveThreshold(threshold);
+            this.zstdmc$installDecoder(pipeline, effectiveThreshold, validateDecompressed);
+            this.zstdmc$installEncoder(pipeline, effectiveThreshold);
+            Zstdmc.LOGGER.debug(
+                    "Installed Zstd compression handlers with vanillaThreshold={} effectiveThreshold={} validateDecompressed={}",
+                    threshold, effectiveThreshold, validateDecompressed
+            );
+            if (zstdmc$loggedInstall.compareAndSet(false, true)) {
+                Zstdmc.LOGGER.info(
+                        "Zstd compression replacement active (vanillaThreshold={}, effectiveThreshold={}, validateDecompressed={}).",
+                        threshold, effectiveThreshold, validateDecompressed
+                );
+            }
             return true;
         }
 

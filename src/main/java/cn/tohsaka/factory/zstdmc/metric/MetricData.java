@@ -29,19 +29,19 @@ public class MetricData {
         return addr;
     }
 
-    public Long getRxbytes() {
+    public long getRxbytes() {
         return rxbytes.longValue();
     }
 
-    public Long getTxbytes() {
+    public long getTxbytes() {
         return txbytes.longValue();
     }
 
-    public Long getRxbytes2() {
+    public long getRxbytes2() {
         return rxbytes2.longValue();
     }
 
-    public Long getTxbytes2() {
+    public long getTxbytes2() {
         return txbytes2.longValue();
     }
 }

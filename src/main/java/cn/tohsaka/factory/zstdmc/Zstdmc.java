@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.ModList;
 import org.slf4j.Logger;
 
 @Mod(Zstdmc.MODID)
@@ -22,9 +23,6 @@ public class Zstdmc {
         modEventBus.addListener(this::commonSetup);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         MinecraftForge.EVENT_BUS.register(this);
-
-        // Prefer pure Java implementation for stability across environments.
-        System.setProperty("zstd.disable.native", "true");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -34,5 +32,8 @@ public class Zstdmc {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         LOGGER.info("ZstdMC active: replacing vanilla packet compression when threshold is enabled.");
+        if (ModList.get().isLoaded("krypton_fnp")) {
+            LOGGER.warn("Detected krypton_fnp. It also optimizes/changes networking and may affect ZstdMC compression results.");
+        }
     }
 }

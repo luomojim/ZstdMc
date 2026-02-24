@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 public final class ZstdMetric {
     private static final ConcurrentHashMap<UUID, MetricData> MAP = new ConcurrentHashMap<>();
-    private static final LongAdder RX_BYTES = new LongAdder();
-    private static final LongAdder TX_BYTES = new LongAdder();
+    private static final LongAdder RX_BYTES_ORIGINAL = new LongAdder();
+    private static final LongAdder TX_BYTES_ORIGINAL = new LongAdder();
     private static final LongAdder RX_BYTES_COMPRESSED = new LongAdder();
     private static final LongAdder TX_BYTES_COMPRESSED = new LongAdder();
 
@@ -22,13 +22,13 @@ public final class ZstdMetric {
 
     public static void reset() {
         MAP.clear();
-        RX_BYTES.reset();
+        RX_BYTES_ORIGINAL.reset();
         RX_BYTES_COMPRESSED.reset();
-        TX_BYTES.reset();
+        TX_BYTES_ORIGINAL.reset();
         TX_BYTES_COMPRESSED.reset();
     }
 
-    public static void update(ChannelHandlerContext ctx, long rx, long rx2, long tx, long tx2) {
+    public static void update(ChannelHandlerContext ctx, long rxOriginal, long rxCompressed, long txOriginal, long txCompressed) {
         var packetHandler = ctx.channel().pipeline().get("packet_handler");
         if (packetHandler instanceof Connection connection) {
             var listener = connection.getPacketListener();
@@ -37,30 +37,30 @@ public final class ZstdMetric {
                 if (player != null) {
                     var uuid = player.getUUID();
                     MAP.computeIfAbsent(uuid, ignored -> new MetricData())
-                            .update(player, player.getIpAddress(), rx, rx2, tx, tx2);
+                            .update(player, player.getIpAddress(), rxOriginal, rxCompressed, txOriginal, txCompressed);
                 }
             }
         }
 
-        RX_BYTES.add(rx);
-        TX_BYTES.add(tx);
-        RX_BYTES_COMPRESSED.add(rx2);
-        TX_BYTES_COMPRESSED.add(tx2);
+        RX_BYTES_ORIGINAL.add(rxOriginal);
+        TX_BYTES_ORIGINAL.add(txOriginal);
+        RX_BYTES_COMPRESSED.add(rxCompressed);
+        TX_BYTES_COMPRESSED.add(txCompressed);
     }
 
-    public static Long getRxbytes() {
-        return RX_BYTES.longValue();
+    public static long getRxbytes() {
+        return RX_BYTES_ORIGINAL.longValue();
     }
 
-    public static Long getTxbytes() {
-        return TX_BYTES.longValue();
+    public static long getTxbytes() {
+        return TX_BYTES_ORIGINAL.longValue();
     }
 
-    public static Long getRxbytes2() {
+    public static long getRxbytes2() {
         return RX_BYTES_COMPRESSED.longValue();
     }
 
-    public static Long getTxbytes2() {
+    public static long getTxbytes2() {
         return TX_BYTES_COMPRESSED.longValue();
     }
 

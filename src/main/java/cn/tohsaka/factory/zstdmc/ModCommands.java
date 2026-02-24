@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static cn.tohsaka.factory.zstdmc.metric.DebugScreenAppender.formatBytes;
+import static cn.tohsaka.factory.zstdmc.metric.DebugScreenAppender.formatReduction;
 
 @Mod.EventBusSubscriber(modid = Zstdmc.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ModCommands {
@@ -45,7 +46,7 @@ public final class ModCommands {
         var list = map.keySet().stream()
                 .sorted(Comparator.comparingLong((UUID uuid) -> {
                     var entry = map.get(uuid);
-                    return entry != null ? entry.getTxbytes2() : 0L;
+                    return entry != null ? entry.getTxbytes() : 0L;
                 }).reversed())
                 .limit(10)
                 .collect(Collectors.toUnmodifiableList());
@@ -58,8 +59,10 @@ public final class ModCommands {
             if (entry == null) {
                 continue;
             }
-            String rxFormatted = formatBytes(entry.getRxbytes2()) + "/" + formatBytes(entry.getRxbytes());
-            String txFormatted = formatBytes(entry.getTxbytes()) + "/" + formatBytes(entry.getTxbytes2());
+            String rxFormatted = formatBytes(entry.getRxbytes()) + "/" + formatBytes(entry.getRxbytes2())
+                    + " (" + formatReduction(entry.getRxbytes(), entry.getRxbytes2()) + ")";
+            String txFormatted = formatBytes(entry.getTxbytes()) + "/" + formatBytes(entry.getTxbytes2())
+                    + " (" + formatReduction(entry.getTxbytes(), entry.getTxbytes2()) + ")";
             var player = playerList.getPlayer(uuid);
             String playerName = player != null ? player.getName().getString() : uuid.toString();
             msg.add(String.format("[%d][%s] TX:%s | RX:%s", i, playerName, txFormatted, rxFormatted));
@@ -69,8 +72,16 @@ public final class ModCommands {
     }
 
     private static int runStatus(CommandContext<CommandSourceStack> context) {
-        String rxFormatted = ChatFormatting.GRAY + "RX: " + ChatFormatting.WHITE + formatBytes(ZstdMetric.getRxbytes2()) + "/" + formatBytes(ZstdMetric.getRxbytes());
-        String txFormatted = ChatFormatting.GRAY + "TX: " + ChatFormatting.WHITE + formatBytes(ZstdMetric.getTxbytes()) + "/" + formatBytes(ZstdMetric.getTxbytes2());
+        long rxOriginal = ZstdMetric.getRxbytes();
+        long rxCompressed = ZstdMetric.getRxbytes2();
+        long txOriginal = ZstdMetric.getTxbytes();
+        long txCompressed = ZstdMetric.getTxbytes2();
+        String rxFormatted = ChatFormatting.GRAY + "RX(orig/comp): " + ChatFormatting.WHITE
+                + formatBytes(rxOriginal) + "/" + formatBytes(rxCompressed)
+                + ChatFormatting.DARK_GRAY + " (" + formatReduction(rxOriginal, rxCompressed) + ")";
+        String txFormatted = ChatFormatting.GRAY + "TX(orig/comp): " + ChatFormatting.WHITE
+                + formatBytes(txOriginal) + "/" + formatBytes(txCompressed)
+                + ChatFormatting.DARK_GRAY + " (" + formatReduction(txOriginal, txCompressed) + ")";
         context.getSource().sendSuccess(() -> Component.literal(rxFormatted + "\n" + txFormatted), true);
         return 1;
     }

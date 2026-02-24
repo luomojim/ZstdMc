@@ -7,16 +7,17 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import net.minecraft.network.Connection;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.lang.reflect.Field;
+
 @Mixin(Connection.class)
 public abstract class MixinConnection {
-    @Shadow
-    private Channel channel;
+    @Unique
+    private static Field zstdmc$channelField;
 
     @Inject(method = "setupCompression(IZ)V", at = @At("HEAD"), cancellable = true, require = 0)
     private void zstdmc$setupCompressionModern(int threshold, boolean validateDecompressed, CallbackInfo ci) {
@@ -27,11 +28,12 @@ public abstract class MixinConnection {
 
     @Unique
     private boolean zstdmc$applyCompression(int threshold, boolean validateDecompressed) {
-        if (this.channel == null) {
+        Channel channel = this.zstdmc$getChannel();
+        if (channel == null) {
             return false;
         }
 
-        ChannelPipeline pipeline = this.channel.pipeline();
+        ChannelPipeline pipeline = channel.pipeline();
         if (threshold >= 0) {
             this.zstdmc$installDecoder(pipeline, threshold, validateDecompressed);
             this.zstdmc$installEncoder(pipeline, threshold);
@@ -86,6 +88,25 @@ public abstract class MixinConnection {
             pipeline.addBefore("encoder", "compress", new ZstdCompressionEncoder(threshold));
         } else {
             pipeline.addLast("compress", new ZstdCompressionEncoder(threshold));
+        }
+    }
+
+    @Unique
+    private Channel zstdmc$getChannel() {
+        try {
+            if (zstdmc$channelField == null) {
+                for (Field field : Connection.class.getDeclaredFields()) {
+                    if (Channel.class.isAssignableFrom(field.getType())) {
+                        field.setAccessible(true);
+                        zstdmc$channelField = field;
+                        break;
+                    }
+                }
+            }
+            return zstdmc$channelField != null ? (Channel) zstdmc$channelField.get(this) : null;
+        } catch (Throwable t) {
+            Zstdmc.LOGGER.debug("Failed to access Connection channel field via reflection.", t);
+            return null;
         }
     }
 }

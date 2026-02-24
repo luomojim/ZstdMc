@@ -38,6 +38,10 @@ public final class ModCommands {
     private static int listTop10(CommandContext<CommandSourceStack> ctx) {
         var playerList = ctx.getSource().getServer().getPlayerList();
         var map = ZstdMetric.getMap();
+        if (map.isEmpty()) {
+            ctx.getSource().sendSuccess(() -> Component.translatable("zstdmc.command.top.empty"), false);
+            return 1;
+        }
         var list = map.keySet().stream()
                 .sorted(Comparator.comparingLong((UUID uuid) -> {
                     var entry = map.get(uuid);
@@ -73,7 +77,7 @@ public final class ModCommands {
 
     private static int runReset(CommandContext<CommandSourceStack> context) {
         ZstdMetric.reset();
-        context.getSource().sendSuccess(() -> Component.literal("Zstd metrics reset."), true);
+        context.getSource().sendSuccess(() -> Component.translatable("zstdmc.command.reset.success"), true);
         return 1;
     }
 }

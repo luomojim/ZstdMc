@@ -1,3 +1,5 @@
 {
-  "zstdmc.debug.title": "[Zstd Metrics]"
+  "zstdmc.debug.title": "[Zstd Metrics]",
+  "zstdmc.command.reset.success": "Zstd metrics reset.",
+  "zstdmc.command.top.empty": "No metric data collected yet."
 }

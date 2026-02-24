@@ -1,0 +1,5 @@
+{
+  "zstdmc.debug.title": "[Zstd 压缩统计]",
+  "zstdmc.command.reset.success": "Zstd 统计数据已重置。",
+  "zstdmc.command.top.empty": "当前暂无可显示的统计数据。"
+}

@@ -25,13 +25,6 @@ public abstract class MixinConnection {
         }
     }
 
-    @Inject(method = "setupCompression(I)V", at = @At("HEAD"), cancellable = true, require = 0)
-    private void zstdmc$setupCompressionLegacy(int threshold, CallbackInfo ci) {
-        if (this.zstdmc$applyCompression(threshold, false)) {
-            ci.cancel();
-        }
-    }
-
     @Unique
     private boolean zstdmc$applyCompression(int threshold, boolean validateDecompressed) {
         if (this.channel == null) {

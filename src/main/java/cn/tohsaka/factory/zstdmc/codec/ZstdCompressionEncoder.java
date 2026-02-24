@@ -8,7 +8,7 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToByteEncoder;
-import net.minecraft.network.VarInt;
+import net.minecraft.network.FriendlyByteBuf;
 
 public class ZstdCompressionEncoder extends MessageToByteEncoder<ByteBuf> {
     private int threshold;
@@ -21,12 +21,12 @@ public class ZstdCompressionEncoder extends MessageToByteEncoder<ByteBuf> {
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) {
         int readableBytes = msg.readableBytes();
         if (readableBytes < this.threshold) {
-            VarInt.write(out, 0);
+            new FriendlyByteBuf(out).writeVarInt(0);
             out.writeBytes(msg, msg.readerIndex(), readableBytes);
             return;
         }
 
-        VarInt.write(out, readableBytes);
+        new FriendlyByteBuf(out).writeVarInt(readableBytes);
 
         byte[] source = ByteBufUtil.getBytes(msg, msg.readerIndex(), readableBytes, false);
         int maxCompressedSize = Math.toIntExact(Zstd.compressBound(readableBytes));

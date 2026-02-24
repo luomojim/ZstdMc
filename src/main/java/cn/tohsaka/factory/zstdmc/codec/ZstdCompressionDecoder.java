@@ -7,7 +7,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
-import net.minecraft.network.VarInt;
+import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class ZstdCompressionDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        int decompressedLength = VarInt.read(in);
+        int decompressedLength = new FriendlyByteBuf(in).readVarInt();
         if (decompressedLength == 0) {
             out.add(in.readRetainedSlice(in.readableBytes()));
             return;

@@ -1,41 +1,57 @@
 # ZstdMC (Forge 1.20.1)
 
-ZstdMC is a Forge mod that replaces Minecraft's vanilla packet compression/decompression handlers with Zstandard (Zstd) to reduce multiplayer bandwidth usage.
+## 中文说明
 
-## Current Target
+### 项目简介
+ZstdMC 是一个 Forge 1.20.1 模组，用 Zstandard (Zstd) 替换 Minecraft 原版网络压缩与解压流程，从而在多人和局域网联机中减少网络流量占用。
 
-- Loader: Forge
-- Minecraft: 1.20.1
-- Forge: 47.x
-- Java: 17
+### 版本与环境
+- Minecraft: `1.20.1`
+- Forge: `47.x`
+- Java: `17`（运行时可用 17+）
 
-## What This Mod Changes
+### 功能特性
+- 替换 `Connection.setupCompression` 的压缩与解压处理器。
+- 支持专用服务器与局域网（Open to LAN）场景。
+- 提供调试统计（F3 右侧显示 `[Zstd 压缩统计]`）。
 
-- Replaces `Connection.setupCompression` pipeline handlers:
-  - Vanilla `compress` -> `ZstdCompressionEncoder`
-  - Vanilla `decompress` -> `ZstdCompressionDecoder`
-- Works for:
-  - Dedicated server
-  - Integrated server (Open to LAN)
+### 安装说明
+1. 将模组放入客户端与服务端（或局域网主机与加入方）`mods` 文件夹。
+2. 在 `server.properties` 中设置：
+   - `network-compression-threshold=128`（建议 `256`）。
 
-## Installation
+### 包类型说明
+- `fit`：不内置 `zstd-jni`，更适合大型整合包（避免与其它模组重复打包冲突）。
+- `fat`：内置 `zstd-jni`，适合依赖环境简单、希望单文件使用的场景。
 
-1. Put the mod on both server and client.
-2. Set `network-compression-threshold` in `server.properties` to `128` or higher (recommended `256`).
-3. For LAN play, both the host and all joining clients must load this mod.
+### 常见问题
+- 提示“无法加载有效的 resourcepackinfo”：
+  - 旧版构建缺少 `pack.mcmeta`，请使用本仓库重新构建后的新版本。
 
-## Verification In Game
+## English
 
-- Press F3 and check right-side debug text for `[Zstd Metrics]`.
-- Run admin commands:
-  - `/zstd status`
-  - `/zstd reset`
-  - `/zstd top10`
+### Overview
+ZstdMC is a Forge 1.20.1 mod that replaces Minecraft's vanilla packet compression/decompression with Zstandard (Zstd), reducing bandwidth usage in multiplayer and LAN sessions.
 
-## Build
+### Target Environment
+- Minecraft: `1.20.1`
+- Forge: `47.x`
+- Java: `17` (runtime 17+)
 
-- `gradlew.bat buildAll`
-  - `fit` jar: regular jar (no dependency shading)
-  - `fat` jar: includes local `libs/zstd-jni-1.5.7-6.jar`
+### Features
+- Replaces compression handlers in `Connection.setupCompression`.
+- Works on dedicated servers and integrated LAN hosts.
+- Provides debug metrics on F3 (`[Zstd Metrics]`).
 
-In most environments, prefer the `fat` jar.
+### Installation
+1. Put the mod on both client and server (or LAN host and all joining clients).
+2. Set this in `server.properties`:
+   - `network-compression-threshold=128` (recommended `256`).
+
+### Artifact Types
+- `fit`: no bundled `zstd-jni`; recommended for modpacks to avoid duplicate-package conflicts.
+- `fat`: bundles `zstd-jni`; convenient for standalone environments.
+
+### Troubleshooting
+- If you see `invalid resourcepackinfo`:
+  - Older jars were missing `pack.mcmeta`. Use a newly built jar from this repository.
